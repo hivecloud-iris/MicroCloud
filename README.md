@@ -34,12 +34,98 @@ As enabled previously we can now access the kubernetes dashboard:
 
 To have a better view of our kubernetes cluster we use `weave scope` to monitor our services and pods.
 
+weave scope helps us get a better tracability on our infrastructure.
+
 Deploy weave scope:
 
-`kubectl apply -f https://github.com/weaveworks/scope/releases/download/v1.13.2/k8s-scope.yaml`
-
-Acces the dashboard:
-
-`kubectl port-forward -n weave "$(kubectl get -n weave pod --selector=weave-scope-component=app -o jsonpath='{.items..metadata.name}')" 4040`
+`kubectl apply -f ./manifests/weave.yml`
 
 ![Dashboard](./images/weave-dashboard.png)
+
+# OpenFaaS
+
+Our users don't always need VM or containers. Sometimes they just want to run some functions!
+So we decided to use `OpenFaaS` and set it on top of our `k8s` node.
+
+## Installation
+
+First, we need to create the namespaces for openfaas:
+
+`kubectl apply -f ./manifests/openfaas-ns.yml`
+
+Then add `OpenFaaS` repo to helm:
+
+`helm repo add openfaas https://openfaas.github.io/faas-netes/`
+
+And deploy `OpenFaas`:
+
+```bash
+helm repo update \
+ && helm upgrade openfaas --install openfaas/openfaas \
+    --namespace openfaas  \
+    --set functionNamespace=openfaas-fn \
+    --set generateBasicAuth=true
+```
+
+## Access
+
+Now that `OpenFaaS` is installed we can now acces its dashboard:
+
+![Dashboard](./images/openfaas-ui.png)
+
+# LXD
+
+We want to provide IaaS to our clients and we choose `LXD` for this.
+
+`LXD` is a wrapper for `LXC` made to provide an API and more advanced featrues.
+
+## Installation
+
+Here we are going to install `LXD` and `OVN` to provide Virtual Networks to our users.
+
+### Setup LXD
+
+Install the package:
+
+`sudo snap install lxd --channel=latest/stable`
+
+Configure LXD:
+
+`sudo lxd init`
+
+Output:
+
+```
+Would you like to use LXD clustering? (yes/no) [default=no]: yes
+What IP address or DNS name should be used to reach this server? [default=192.168.2.100]: 127.0.0.1
+Are you joining an existing cluster? (yes/no) [default=no]: no
+What member name should be used to identify this server in the cluster? [default=pop-os]: microcloud
+Setup password authentication on the cluster? (yes/no) [default=no]: no
+Do you want to configure a new local storage pool? (yes/no) [default=yes]: yes
+Name of the storage backend to use (dir, lvm, btrfs) [default=btrfs]: dir
+Do you want to configure a new remote storage pool? (yes/no) [default=no]: no
+Would you like to connect to a MAAS server? (yes/no) [default=no]: no
+Would you like to configure LXD to use an existing bridge or host interface? (yes/no) [default=no]: no
+Would you like stale cached images to be updated automatically? (yes/no) [default=yes]: 
+Would you like a YAML "lxd init" preseed to be printed? (yes/no) [default=no]: 
+```
+
+### Setup OVN
+
+Install the packages:
+
+`sudo apt install ovn-host ovn-central`
+
+Configure OVN:
+
+```bash
+sudo ovs-vsctl set open_vswitch . \
+   external_ids:ovn-remote=unix:/var/run/ovn/ovnsb_db.sock \
+   external_ids:ovn-encap-type=geneve \
+   external_ids:ovn-encap-ip=127.0.0.1
+```
+
+## Network setup
+
+Now that we installed `LXD` and `OVN` we now need to setup our SDN(Software Defined Networks).
+
