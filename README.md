@@ -149,3 +149,11 @@ The parameter `ipv4.gateway` specifies the CIDR used by network `UPLINK`
 
 We are now able to create SDNs for our client (here up to 253 SDNs)
 
+# MicroCloud controller
+
+Now that we setted up everything we need for our cloud, we need to create a controller that will be used as a gateway between the users and the infrastructure.
+
+![Controller](./images/hmc-controller.png)
+
+
+You can find the controller at https://github.com/hivecloud-iris/hmc-controller
