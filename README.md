@@ -89,6 +89,8 @@ Install the package:
 
 `sudo snap install lxd --channel=latest/stable`
 
+P.S. We recommand building lxd from sources...
+
 Configure LXD:
 
 `sudo lxd init`
@@ -128,4 +130,22 @@ sudo ovs-vsctl set open_vswitch . \
 ## Network setup
 
 Now that we installed `LXD` and `OVN` we now need to setup our SDN(Software Defined Networks).
+
+First we need to create a BRIDGE network:
+
+`lxc network create BRIDGE --type bridge`
+
+And then out OVN main network:
+
+```bash
+lxc network create UPLINK --type=physical parent=BRIDGE\
+   ipv4.ovn.ranges=<BRIDGE_IP_range> \
+   ipv4.gateway=<BRIDGE_network_gateway> \
+   dns.nameservers=<name_server>
+```
+The parameter `ipv4.gateway` specifies the CIDR used by network `UPLINK`
+
+`ipv4.ovn.ranges` specifies the usable WAN IPs for our users SDNs.
+
+We are now able to create SDNs for our client (here up to 253 SDNs)
 
